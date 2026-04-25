@@ -39,9 +39,64 @@ st.set_page_config(
     layout="wide",
 )
 
-st.title("Herramientas Makita (PVPs 2026)")
+st.set_page_config(
+    page_title="Buscador de precios Makita",
+    layout="wide",
+)
 
-st.write("Búsqueda por modelo, nombre o descripción")
+st.markdown(
+    """
+    <style>
+    .stApp {
+        background: #f7f7f5;
+    }
+
+    .main-title {
+        text-align: center;
+        font-size: 42px;
+        font-weight: 800;
+        margin-bottom: 0;
+    }
+
+    .subtitle {
+        text-align: center;
+        font-size: 18px;
+        color: #666;
+        margin-top: 4px;
+        margin-bottom: 28px;
+    }
+
+    .creator-box {
+        text-align: center;
+        background: white;
+        padding: 14px 18px;
+        border-radius: 14px;
+        border: 1px solid #e5e5e5;
+        max-width: 650px;
+        margin: 0 auto 28px auto;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+
+    .creator-box strong {
+        color: #111;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+st.markdown(
+    """
+    <h1 style="text-align: center; margin-bottom: 0;">
+        Herramientas Makita
+    </h1>
+    <p style="text-align: center; font-size: 18px; color: gray;">
+        Buscador de precios · PVPs 2026
+    </p>
+    """,
+    unsafe_allow_html=True,
+)
+
 
 df = load_data(DATA_FILE)
 
@@ -72,8 +127,3 @@ if query:
 
 else:
     st.info("Escriba modelo, nombre o descripción")
-
-st.markdown(
-    '<div class="footer-text">Creado por Juan D. Bravo · 2026</div>',
-    unsafe_allow_html=True,
-)
