@@ -6,8 +6,9 @@ import streamlit as st
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-HERRAMIENTAS_FILE = BASE_DIR / "clean_data" / "makita_offer_2026.xlsx"
-ACCESORIOS_FILE = BASE_DIR / "clean_data" / "makita_accesorios.xlsx"
+HERRAMIENTAS_MAKITA_FILE = BASE_DIR / "clean_data" / "makita_offer_2026.xlsx"
+ACCESORIOS_MAKITA_FILE = BASE_DIR / "clean_data" / "makita_accesorios.xlsx"
+ARTICULOS_CV_TOOLS_FILE = BASE_DIR / "clean_data" / "cv_tools_2026_clean.xlsx"
 
 
 @st.cache_data
@@ -79,7 +80,7 @@ def render_search(
 
 
 st.set_page_config(
-    page_title="Buscador de precios Makita",
+    page_title="Buscador de precios Makita y CV Tools",
     layout="wide",
 )
 
@@ -112,36 +113,46 @@ st.markdown(
 st.markdown(
     """
     <h1 style="text-align: center; margin-bottom: 0;">
-        Buscador de precios Makita
+        BUSCADOR DE PRECIOS
     </h1>
     <p style="text-align: center; font-size: 18px; color: gray;">
-        Buscador de precios · Sólo PVPs 2026
+        · Sólo PVPs 2026 ·
     </p>
     """,
     unsafe_allow_html=True,
 )
 
-herramientas_df = load_data(HERRAMIENTAS_FILE)
-accesorios_df = load_data(ACCESORIOS_FILE)
+makita_herr_df = load_data(HERRAMIENTAS_MAKITA_FILE)
+makita_acc_df = load_data(ACCESORIOS_MAKITA_FILE)
+cv_tools_df = load_data(ARTICULOS_CV_TOOLS_FILE)
 
-tab_tools, tab_accessories = st.tabs(
-    ["Máquinas", "Accesorios"]
+tab_1, tab_2, tab_3 = st.tabs(
+    ["MAKITA·Máquinas", "MAKITA·Accesorios", "CV TOOLS·Todo"]
 )
 
-with tab_tools:
-    st.subheader("Máquinas")
+with tab_1:
+    st.subheader("MAKITA Máquinas")
     render_search(
-        herramientas_df,
+        makita_herr_df,
         placeholder="Ejemplo: DHP492, GA9020, lijadora, aspirador",
         key="herramientas_search",
         price_col="PVP-2026",
     )
 
-with tab_accessories:
-    st.subheader("Accesorios")
+with tab_2:
+    st.subheader("MAKITA Accesorios")
     render_search(
-        accesorios_df,
+        makita_acc_df,
         placeholder="Ejemplo: broca, disco, batería, cargador",
         key="accesorios_search",
         price_col="PVP-VIGENTE",
+    )
+
+with tab_3:
+    st.subheader("CV TOOLS Todo")
+    render_search(
+        cv_tools_df,
+        placeholder="Ejemplo: señal, cono, cartel, 0808A",
+        key="cv_tools_search",
+        price_col="PVP",
     )
