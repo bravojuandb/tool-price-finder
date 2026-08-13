@@ -7,12 +7,12 @@ import streamlit as st
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 HERRAMIENTAS_MAKITA_FILE = BASE_DIR / "clean_data" / "makita_offer_2026.xlsx"
-ACCESORIOS_MAKITA_FILE = BASE_DIR / "clean_data" / "makita_accesorios.xlsx"
+ACCESORIOS_MAKITA_FILE = BASE_DIR / "clean_data" / "makita_accesorios_26_27.xlsx"
 ARTICULOS_CV_TOOLS_FILE = BASE_DIR / "clean_data" / "cv_tools_2026_clean.xlsx"
 
 
 @st.cache_data
-def load_data(path: Path) -> pd.DataFrame:
+def load_data_general(path: Path) -> pd.DataFrame:
     df = pd.read_excel(path)
 
     # Clean possible hidden spaces in column names
@@ -23,6 +23,24 @@ def load_data(path: Path) -> pd.DataFrame:
     df["Descripción"] = df["Descripción"].astype(str).str.strip()
 
     return df
+
+@st.cache_data
+def load_data_makita_accesories(path: Path) -> pd.DataFrame:
+    df = pd.read_excel(path, header=1)
+
+    # Clean possible hidden spaces in column names
+    df.columns = df.columns.str.strip()
+
+    # Select valid columns
+    df = df[["CODIGO", "DESCRIPCION", "PVP"]].copy()
+
+    # Normalize searchable text
+    df["Modelo"] = df["CODIGO"].astype(str).str.upper().str.strip()
+    df["Descripción"] = df["DESCRIPCION"].astype(str).str.strip()
+    df["PVP-VIGENTE"] = pd.to_numeric(df["PVP"], errors="coerce")
+
+    return df
+
 
 
 def search_products(df: pd.DataFrame, query: str) -> pd.DataFrame:
@@ -122,12 +140,12 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-makita_herr_df = load_data(HERRAMIENTAS_MAKITA_FILE)
-makita_acc_df = load_data(ACCESORIOS_MAKITA_FILE)
-cv_tools_df = load_data(ARTICULOS_CV_TOOLS_FILE)
+makita_herr_df = load_data_general(HERRAMIENTAS_MAKITA_FILE)
+makita_acc_df = load_data_makita_accesories(ACCESORIOS_MAKITA_FILE)
+cv_tools_df = load_data_general(ARTICULOS_CV_TOOLS_FILE)
 
 tab_1, tab_2, tab_3 = st.tabs(
-    ["MAKITA·Máquinas", "MAKITA·Accesorios", "CV TOOLS·Todo"]
+    ["MAKITA · Máquinas", "MAKITA · Accesorios", "CV TOOLS · Todo"]
 )
 
 with tab_1:
