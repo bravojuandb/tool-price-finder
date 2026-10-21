@@ -1,77 +1,79 @@
+from dataclasses import dataclass
 from pathlib import Path
 
 import pandas as pd
 import streamlit as st
 
+from data import load_price_list, search_products
+
+
+# ---------- Configuration: one entry per price list ----------
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-HERRAMIENTAS_MAKITA_FILE = BASE_DIR / "clean_data" / "makita_offer_2026.xlsx"
-ACCESORIOS_MAKITA_FILE = BASE_DIR / "clean_data" / "makita_accesorios_26_27.xlsx"
-ARTICULOS_CV_TOOLS_FILE = BASE_DIR / "clean_data" / "cv_tools_2026_clean.xlsx"
+DATA_DIR = BASE_DIR / "clean_data"
+BANNER_FILE = BASE_DIR / "assets" / "banner.jpg"
 
 
-@st.cache_data
-def load_data_general(path: Path) -> pd.DataFrame:
-    df = pd.read_excel(path)
-
-    # Clean possible hidden spaces in column names
-    df.columns = df.columns.str.strip()
-
-    # Normalize searchable text
-    df["Modelo"] = df["Modelo"].astype(str).str.upper().str.strip()
-    df["Descripción"] = df["Descripción"].astype(str).str.strip()
-
-    return df
-
-@st.cache_data
-def load_data_makita_accesories(path: Path) -> pd.DataFrame:
-    df = pd.read_excel(path, header=1)
-
-    # Clean possible hidden spaces in column names
-    df.columns = df.columns.str.strip()
-
-    # Select valid columns
-    df = df[["CODIGO", "DESCRIPCION", "PVP"]].copy()
-
-    # Normalize searchable text
-    df["Modelo"] = df["CODIGO"].astype(str).str.upper().str.strip()
-    df["Descripción"] = df["DESCRIPCION"].astype(str).str.strip()
-    df["PVP-VIGENTE"] = pd.to_numeric(df["PVP"], errors="coerce")
-
-    return df
+@dataclass(frozen=True)
+class PriceList:
+    tab_name: str
+    path: Path
+    header_row: int
+    columns: dict[str, str]  # Excel column name -> standard name
+    price_label: str  # Price column header shown in the table
+    placeholder: str
+    key: str
 
 
+PRICE_LISTS = [
+    PriceList(
+        tab_name="MAKITA · Máquinas (oct-2026)",
+        path=DATA_DIR / "makita_tools_2026.xlsx",
+        header_row=0,
+        columns={"Modelo": "Modelo", "Descripción": "Descripción", "PVP-2026": "PVP"},
+        price_label="PVP-2026",
+        placeholder="Ejemplo: DHP492, GA9020, lijadora, aspirador",
+        key="herramientas_search",
+    ),
+    PriceList(
+        tab_name="MAKITA · Accesorios (ago-2026)",
+        path=DATA_DIR / "makita_accesorios_26_27.xlsx",
+        header_row=1,
+        columns={"CODIGO": "Modelo", "DESCRIPCION": "Descripción", "PVP": "PVP"},
+        price_label="PVP-VIGENTE",
+        placeholder="Ejemplo: broca, disco, batería, cargador",
+        key="accesorios_search",
+    ),
+    PriceList(
+        tab_name="CV TOOLS · Todo (ene-2026)",
+        path=DATA_DIR / "cv_tools_2026_clean.xlsx",
+        header_row=0,
+        columns={"Modelo": "Modelo", "Descripción": "Descripción", "PVP": "PVP"},
+        price_label="PVP",
+        placeholder="Ejemplo: señal, cono, cartel, 0808A",
+        key="cv_tools_search",
+    ),
+]
 
-def search_products(df: pd.DataFrame, query: str) -> pd.DataFrame:
-    query = query.upper().strip()
 
-    if not query:
-        return pd.DataFrame()
+# ---------- Interface ----------
 
-    exact = df[df["Modelo"] == query]
-
-    if not exact.empty:
-        return exact
-
-    partial = df[
-        df["Modelo"].str.contains(query, na=False)
-        | df["Descripción"].str.upper().str.contains(query, na=False)
-    ]
-
-    return partial
+# Caching belongs to the interface, so data.py stays free of Streamlit
+load_price_list_cached = st.cache_data(load_price_list)
 
 
 def render_search(
     df: pd.DataFrame,
     placeholder: str,
     key: str,
-    price_col: str,
+    price_label: str,
 ) -> None:
     query = st.text_input(
-        "Escriba aquí:",
+        "Buscar",
         placeholder=placeholder,
         key=key,
+        icon=":material/search:",
+        label_visibility="collapsed",
     )
 
     result = search_products(df, query)
@@ -80,97 +82,45 @@ def render_search(
         if result.empty:
             st.warning("No se ha encontrado nada")
         else:
-            st.success(f"{len(result)} resultado(s)")
+            st.caption(f"**{len(result)}** resultado(s)")
 
             st.dataframe(
-                result[["Modelo", "Descripción", price_col]],
+                result[["Modelo", "Descripción", "PVP"]],
                 hide_index=True,
-                use_container_width=True,
+                width="stretch",
                 column_config={
-                    price_col: st.column_config.NumberColumn(
-                        price_col,
+                    "PVP": st.column_config.NumberColumn(
+                        price_label,
                         format="€ %.2f",
                     )
                 },
             )
     else:
-        st.info("Escriba modelo, nombre o descripción")
+        st.caption("Escriba modelo, nombre o descripción")
 
 
 st.set_page_config(
-    page_title="Buscador de precios Makita y CV Tools",
-    layout="wide",
+    page_title="Buscador de precios",
+    layout="centered",
 )
 
-st.markdown(
-    """
-    <style>
-    .stApp {
-        background: #f7f7f5;
-    }
+# Colors and fonts live in .streamlit/config.toml
+st.image(BANNER_FILE, width="stretch")
+st.title("BUSCADOR DE PRECIOS", text_alignment="center")
+st.caption("Solo PVP", text_alignment="center")
 
-    .main-title {
-        text-align: center;
-        font-size: 42px;
-        font-weight: 800;
-        margin-bottom: 0;
-    }
+tabs = st.tabs([price_list.tab_name for price_list in PRICE_LISTS])
 
-    .subtitle {
-        text-align: center;
-        font-size: 18px;
-        color: #666;
-        margin-top: 4px;
-        margin-bottom: 28px;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
-
-st.markdown(
-    """
-    <h1 style="text-align: center; margin-bottom: 0;">
-        BUSCADOR DE PRECIOS
-    </h1>
-    <p style="text-align: center; font-size: 18px; color: gray;">
-        · Sólo PVPs 2026 ·
-    </p>
-    """,
-    unsafe_allow_html=True,
-)
-
-makita_herr_df = load_data_general(HERRAMIENTAS_MAKITA_FILE)
-makita_acc_df = load_data_makita_accesories(ACCESORIOS_MAKITA_FILE)
-cv_tools_df = load_data_general(ARTICULOS_CV_TOOLS_FILE)
-
-tab_1, tab_2, tab_3 = st.tabs(
-    ["MAKITA · Máquinas", "MAKITA · Accesorios", "CV TOOLS · Todo"]
-)
-
-with tab_1:
-    st.subheader("MAKITA Máquinas")
-    render_search(
-        makita_herr_df,
-        placeholder="Ejemplo: DHP492, GA9020, lijadora, aspirador",
-        key="herramientas_search",
-        price_col="PVP-2026",
-    )
-
-with tab_2:
-    st.subheader("MAKITA Accesorios")
-    render_search(
-        makita_acc_df,
-        placeholder="Ejemplo: broca, disco, batería, cargador",
-        key="accesorios_search",
-        price_col="PVP-VIGENTE",
-    )
-
-with tab_3:
-    st.subheader("CV TOOLS Todo")
-    render_search(
-        cv_tools_df,
-        placeholder="Ejemplo: señal, cono, cartel, 0808A",
-        key="cv_tools_search",
-        price_col="PVP",
-    )
+for tab, price_list in zip(tabs, PRICE_LISTS):
+    with tab:
+        df = load_price_list_cached(
+            price_list.path,
+            price_list.header_row,
+            price_list.columns,
+        )
+        render_search(
+            df,
+            placeholder=price_list.placeholder,
+            key=price_list.key,
+            price_label=price_list.price_label,
+        )
