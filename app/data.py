@@ -29,6 +29,11 @@ def load_price_list(
 
 
 def search_products(df: pd.DataFrame, query: str) -> pd.DataFrame:
+    """Return the rows matching `query`.
+
+    An exact model match wins. Otherwise every word in the query must appear
+    in the model or the description, in any order.
+    """
     query = query.upper().strip()
 
     if not query:
@@ -39,9 +44,12 @@ def search_products(df: pd.DataFrame, query: str) -> pd.DataFrame:
     if not exact.empty:
         return exact
 
-    partial = df[
-        df["Modelo"].str.contains(query, na=False, regex=False)
-        | df["Descripción"].str.upper().str.contains(query, na=False, regex=False)
-    ]
+    searchable = (
+        df["Modelo"].fillna("") + " " + df["Descripción"].fillna("")
+    ).str.upper()
 
-    return partial
+    mask = pd.Series(True, index=df.index)
+    for word in query.split():
+        mask &= searchable.str.contains(word, regex=False)
+
+    return df[mask]

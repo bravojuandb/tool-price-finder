@@ -26,7 +26,7 @@ class PriceList:
 
 PRICE_LISTS = [
     PriceList(
-        tab_name="MAKITA · Máquinas",
+        tab_name="MAKITA · Máquinas (actualizada oct-2026)",
         title="MAKITA Máquinas",
         path=DATA_DIR / "makita_tools_2026.xlsx",
         header_row=0,
@@ -87,7 +87,7 @@ def render_search(
             st.dataframe(
                 result[["Modelo", "Descripción", "PVP"]],
                 hide_index=True,
-                use_container_width=True,
+                width="stretch",
                 column_config={
                     "PVP": st.column_config.NumberColumn(
                         price_label,
@@ -136,7 +136,7 @@ st.markdown(
         BUSCADOR DE PRECIOS
     </h1>
     <p style="text-align: center; font-size: 18px; color: gray;">
-        · Sólo PVPs 2026 ·
+        · Sólo PVPs ·
     </p>
     """,
     unsafe_allow_html=True,
