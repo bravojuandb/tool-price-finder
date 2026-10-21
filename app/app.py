@@ -28,7 +28,7 @@ PRICE_LISTS = [
     PriceList(
         tab_name="MAKITA · Máquinas",
         title="MAKITA Máquinas",
-        path=DATA_DIR / "makita_offer_2026.xlsx",
+        path=DATA_DIR / "makita_tools_2026.xlsx",
         header_row=0,
         columns={"Modelo": "Modelo", "Descripción": "Descripción", "PVP-2026": "PVP"},
         price_label="PVP-2026",
