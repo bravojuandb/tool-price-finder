@@ -9,13 +9,14 @@ from data import load_price_list, search_products
 
 # ---------- Configuration: one entry per price list ----------
 
-DATA_DIR = Path(__file__).resolve().parent.parent / "clean_data"
+BASE_DIR = Path(__file__).resolve().parent.parent
+DATA_DIR = BASE_DIR / "clean_data"
+BANNER_FILE = BASE_DIR / "assets" / "banner.jpg"
 
 
 @dataclass(frozen=True)
 class PriceList:
     tab_name: str
-    title: str
     path: Path
     header_row: int
     columns: dict[str, str]  # Excel column name -> standard name
@@ -26,8 +27,7 @@ class PriceList:
 
 PRICE_LISTS = [
     PriceList(
-        tab_name="MAKITA · Máquinas (actualizada oct-2026)",
-        title="MAKITA Máquinas",
+        tab_name="MAKITA · Máquinas (oct-2026)",
         path=DATA_DIR / "makita_tools_2026.xlsx",
         header_row=0,
         columns={"Modelo": "Modelo", "Descripción": "Descripción", "PVP-2026": "PVP"},
@@ -36,8 +36,7 @@ PRICE_LISTS = [
         key="herramientas_search",
     ),
     PriceList(
-        tab_name="MAKITA · Accesorios",
-        title="MAKITA Accesorios",
+        tab_name="MAKITA · Accesorios (ago-2026)",
         path=DATA_DIR / "makita_accesorios_26_27.xlsx",
         header_row=1,
         columns={"CODIGO": "Modelo", "DESCRIPCION": "Descripción", "PVP": "PVP"},
@@ -46,8 +45,7 @@ PRICE_LISTS = [
         key="accesorios_search",
     ),
     PriceList(
-        tab_name="CV TOOLS · Todo",
-        title="CV TOOLS Todo",
+        tab_name="CV TOOLS · Todo (ene-2026)",
         path=DATA_DIR / "cv_tools_2026_clean.xlsx",
         header_row=0,
         columns={"Modelo": "Modelo", "Descripción": "Descripción", "PVP": "PVP"},
@@ -71,9 +69,11 @@ def render_search(
     price_label: str,
 ) -> None:
     query = st.text_input(
-        "Escriba aquí:",
+        "Buscar",
         placeholder=placeholder,
         key=key,
+        icon=":material/search:",
+        label_visibility="collapsed",
     )
 
     result = search_products(df, query)
@@ -82,7 +82,7 @@ def render_search(
         if result.empty:
             st.warning("No se ha encontrado nada")
         else:
-            st.success(f"{len(result)} resultado(s)")
+            st.caption(f"**{len(result)}** resultado(s)")
 
             st.dataframe(
                 result[["Modelo", "Descripción", "PVP"]],
@@ -96,57 +96,23 @@ def render_search(
                 },
             )
     else:
-        st.info("Escriba modelo, nombre o descripción")
+        st.caption("Escriba modelo, nombre o descripción")
 
 
 st.set_page_config(
-    page_title="Buscador de precios Makita y CV Tools",
-    layout="wide",
+    page_title="Buscador de precios",
+    layout="centered",
 )
 
-st.markdown(
-    """
-    <style>
-    .stApp {
-        background: #f7f7f5;
-    }
-
-    .main-title {
-        text-align: center;
-        font-size: 42px;
-        font-weight: 800;
-        margin-bottom: 0;
-    }
-
-    .subtitle {
-        text-align: center;
-        font-size: 18px;
-        color: #666;
-        margin-top: 4px;
-        margin-bottom: 28px;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
-
-st.markdown(
-    """
-    <h1 style="text-align: center; margin-bottom: 0;">
-        BUSCADOR DE PRECIOS
-    </h1>
-    <p style="text-align: center; font-size: 18px; color: gray;">
-        · Sólo PVPs ·
-    </p>
-    """,
-    unsafe_allow_html=True,
-)
+# Colors and fonts live in .streamlit/config.toml
+st.image(BANNER_FILE, width="stretch")
+st.title("BUSCADOR DE PRECIOS", text_alignment="center")
+st.caption("Solo PVP", text_alignment="center")
 
 tabs = st.tabs([price_list.tab_name for price_list in PRICE_LISTS])
 
 for tab, price_list in zip(tabs, PRICE_LISTS):
     with tab:
-        st.subheader(price_list.title)
         df = load_price_list_cached(
             price_list.path,
             price_list.header_row,

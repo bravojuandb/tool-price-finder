@@ -1,0 +1,13 @@
+[theme]
+base = "light"
+primaryColor = "#00828a"
+backgroundColor = "#f6f8f8"
+secondaryBackgroundColor = "#ffffff"
+textColor = "#18211f"
+borderColor = "#dde3e1"
+showWidgetBorder = true
+dataframeBorderColor = "#dde3e1"
+dataframeHeaderBackgroundColor = "#eef2f1"
+baseRadius = "medium"
+font = "IBM Plex Sans:https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap, sans-serif"
+codeFont = "IBM Plex Mono:https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap, monospace"

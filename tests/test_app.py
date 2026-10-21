@@ -18,5 +18,5 @@ def test_search_shows_results_table():
     at.text_input(key="herramientas_search").input("taladro percutor").run(timeout=60)
 
     assert not at.exception
-    assert at.success
+    assert any("resultado" in caption.value for caption in at.caption)
     assert list(at.dataframe[0].value.columns) == ["Modelo", "Descripción", "PVP"]
